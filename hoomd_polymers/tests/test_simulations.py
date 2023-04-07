@@ -34,10 +34,12 @@ class TestSimulate(BaseTest):
         )
         sim.reference_mass = 2
         sim.reference_distance = 2
+        sim.reference_energy = 2
         assert np.array_equal(2*sim.box_lengths_reduced, sim.box_lengths)
         assert 2*sim.mass_reduced == sim.mass
         assert sim.volume_reduced*8 == sim.volume
         assert sim.density_reduced == sim.density * 4
+        assert sim.reference_energy == 2
 
     def test_NVT(self, polyethylene_system):
         sim = Simulation(
