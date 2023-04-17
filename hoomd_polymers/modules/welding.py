@@ -105,6 +105,10 @@ class Interface:
             interface.pairs.typeid = pair_type_ids
             interface.pairs.types = snap.pairs.types
         return interface
+    
+    def save_gsd(self, file_name="interface.gsd"):
+        with gsd.hoomd.open(file_name, "wb") as traj:
+            traj.append(self.hoomd_snapshot)
 
 
 class SlabSimulation(Simulation):
