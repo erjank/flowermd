@@ -2,7 +2,7 @@ import hoomd
 import numpy as np
 
 from hoomd_polymers.sim.simulation import Simulation
-from hoomd_polymers.sim.actions import PullParticles
+from hoomd_polymers.sim.actions import PullParticles, UpdateWalls
 
 
 class Shear(Simulation):
@@ -46,7 +46,7 @@ class Shear(Simulation):
         self._shear_axis_index = axis_dict[self.shear_axis]
         self._shear_axis_array = axis_array_dict[self.shear_axis]
         self._interface_axis_index = axis_dict[self.interface_axis]
-        self._interface_array = axis_array_dict[self.interface_axis]
+        self._interface_axis_array = axis_array_dict[self.interface_axis]
 
         self.initial_box = self.box_lengths_reduced
         self.initial_length = self.initial_box[self._shear_axis_index]
@@ -64,7 +64,7 @@ class Shear(Simulation):
         # Set tag groups for filters and particle shifts
         shear_neg_tags = np.where(shear_positions<(box_min+self.fix_length))[0]
         shear_pos_tags = np.where(shear_positions>(box_max-self.fix_length))[0]
-        all_shear_tags = np.intersect1d(shear_neg_tags, shear_pos_tags)
+        all_shear_tags = np.union1d(shear_neg_tags, shear_pos_tags)
         interface_neg_tags = np.where(interface_positions < 0)[0]
         interface_pos_tags = np.where(interface_positions > 0)[0]
 
@@ -72,8 +72,8 @@ class Shear(Simulation):
         shift_down_tags = np.intersect1d(interface_pos_tags, all_shear_tags) 
         
         # Create hoomd filters
-        self.fix_shift_up = hoomd.filter.Tags(shift_up_tags) 
-        self.fix_shift_down = hoomd.filter.Tags(shift_down_tags) 
+        self.fix_shift_up = hoomd.filter.Tags(shift_up_tags.astype(np.uint32)) 
+        self.fix_shift_down = hoomd.filter.Tags(shift_down_tags.astype(np.uint32)) 
         all_fixed = hoomd.filter.Union(self.fix_shift_up, self.fix_shift_down)
         # Set the group of particles to be integrated over
         self.integrate_group = hoomd.filter.SetDifference(

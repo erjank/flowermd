@@ -1,2 +1,2 @@
 from .simulation import Simulation
-from .tensile import Tensile 
+from .mechanical import Tensile, Shear 
