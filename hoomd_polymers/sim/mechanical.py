@@ -35,7 +35,7 @@ class Shear(Simulation):
                 log_write_freq=log_write_freq,
         )
         self.shear_axis = shear_axis
-        self.interface_axis = shear_axis
+        self.interface_axis = interface_axis
         self.fix_ratio = fix_ratio
         axis_array_dict = {
                 "x": np.array([1,0,0]),
@@ -68,12 +68,16 @@ class Shear(Simulation):
         interface_neg_tags = np.where(interface_positions < 0)[0]
         interface_pos_tags = np.where(interface_positions > 0)[0]
 
-        shift_up_tags = np.intersect1d(interface_neg_tags, all_shear_tags) 
-        shift_down_tags = np.intersect1d(interface_pos_tags, all_shear_tags) 
-        
+        shift_up_tags = np.intersect1d(
+                interface_neg_tags, all_shear_tags
+        )
+        shift_down_tags = np.intersect1d(interface_pos_tags, all_shear_tags)
+
         # Create hoomd filters
-        self.fix_shift_up = hoomd.filter.Tags(shift_up_tags.astype(np.uint32)) 
-        self.fix_shift_down = hoomd.filter.Tags(shift_down_tags.astype(np.uint32)) 
+        self.fix_shift_up = hoomd.filter.Tags(shift_up_tags.astype(np.uint32))
+        self.fix_shift_down = hoomd.filter.Tags(
+                shift_down_tags.astype(np.uint32)
+        )
         all_fixed = hoomd.filter.Union(self.fix_shift_up, self.fix_shift_down)
         # Set the group of particles to be integrated over
         self.integrate_group = hoomd.filter.SetDifference(
