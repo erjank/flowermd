@@ -19,7 +19,7 @@ class Shear(Simulation):
             seed=42,
             restart=None,
             gsd_write_freq=1e4,
-            gsd_file_name="trajectory.gsd",
+            gsd_file_name="shear.gsd",
             log_write_freq=1e3,
             log_file_name="sim_data.txt"
     ):
@@ -34,19 +34,11 @@ class Shear(Simulation):
                 gsd_file_name=gsd_file_name,
                 log_write_freq=log_write_freq,
         )
-        self.shear_axis = shear_axis
-        self.interface_axis = interface_axis
+        self.shear_axis = np.asarray(shear_axis)
+        self.interface_axis = np.asarray(interface_axis)
         self.fix_ratio = fix_ratio
-        axis_array_dict = {
-                "x": np.array([1,0,0]),
-                "y": np.array([0,1,0]),
-                "z": np.array([0,0,1])
-        }
-        axis_dict = {"x": 0, "y": 1, "z": 2}
-        self._shear_axis_index = axis_dict[self.shear_axis]
-        self._shear_axis_array = axis_array_dict[self.shear_axis]
-        self._interface_axis_index = axis_dict[self.interface_axis]
-        self._interface_axis_array = axis_array_dict[self.interface_axis]
+        self._shear_axis_index = np.where(self.shear_axis != 0)[0]
+        self._interface_axis_index = np.where(self.interface_axis != 0)[0]
 
         self.initial_box = self.box_lengths_reduced
         self.initial_length = self.initial_box[self._shear_axis_index]
@@ -68,9 +60,7 @@ class Shear(Simulation):
         interface_neg_tags = np.where(interface_positions < 0)[0]
         interface_pos_tags = np.where(interface_positions > 0)[0]
 
-        shift_up_tags = np.intersect1d(
-                interface_neg_tags, all_shear_tags
-        )
+        shift_up_tags = np.intersect1d(interface_neg_tags, all_shear_tags)
         shift_down_tags = np.intersect1d(interface_pos_tags, all_shear_tags)
 
         # Create hoomd filters
@@ -84,7 +74,7 @@ class Shear(Simulation):
                 hoomd.filter.All(), all_fixed
         )
         self.add_walls(
-                wall_axis=self._interface_axis_array,
+                wall_axis=self.interface_axis,
                 sigma=1.0,
                 epsilon=1.0,
                 r_cut=2.5
@@ -109,7 +99,7 @@ class Shear(Simulation):
         )
         particle_puller = PullParticles(
             shift_by=shift_by/2,
-            axis=self._shear_axis_array,
+            axis=self.shear_axis,
             neg_filter=self.fix_shift_down,
             pos_filter=self.fix_shift_up
         )
