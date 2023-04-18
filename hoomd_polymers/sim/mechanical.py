@@ -37,32 +37,45 @@ class ShearForce(Simulation):
         )
         self.shear_axis = np.asarray(shear_axis)
         self.interface_axis = np.asarray(interface_axis)
-        self.shear_force = shear_force
         self.fix_ratio = fix_ratio
         self._shear_axis_index = np.where(self.shear_axis != 0)[0]
         self._interface_axis_index = np.where(self.interface_axis != 0)[0]
 
+        self.initial_box = self.box_lengths_reduced
+        self.initial_length = self.initial_box[self._shear_axis_index]
+        self.fix_length = self.initial_length * fix_ratio
+
+        # Set up walls of fixed particles:
         snapshot = self.state.get_snapshot()
+        shear_positions = snapshot.particles.position[:,self._shear_axis_index]
         interface_positions = snapshot.particles.position[
                 :,self._interface_axis_index
         ]
+        box_max = self.initial_length / 2
+        box_min = -box_max
+
+        # Set tag groups for filters and particle shifts
+        shear_neg_tags = np.where(shear_positions<(box_min+self.fix_length))[0]
+        shear_pos_tags = np.where(shear_positions>(box_max-self.fix_length))[0]
+        all_shear_tags = np.union1d(shear_neg_tags, shear_pos_tags)
         interface_neg_tags = np.where(interface_positions < 0)[0]
         interface_pos_tags = np.where(interface_positions > 0)[0]
 
-        shift_up_tags = interface_neg_tags
-        shift_down_tags = interface_pos_tags
+        shift_up_tags = np.intersect1d(interface_neg_tags, all_shear_tags)
+        shift_down_tags = np.intersect1d(interface_pos_tags, all_shear_tags)
 
         # Create hoomd filters
-        self.shift_up = hoomd.filter.Tags(shift_up_tags.astype(np.uint32))
-        self.shift_down = hoomd.filter.Tags(shift_down_tags.astype(np.uint32))
+        self.force_up = hoomd.filter.Tags(shift_up_tags.astype(np.uint32))
+        self.force_down = hoomd.filter.Tags(shift_down_tags.astype(np.uint32))
+        # Set the group of particles to be integrated over
         self.add_walls(
                 wall_axis=self.interface_axis,
                 sigma=1.0,
                 epsilon=1.0,
-                r_cut=1.5
+                r_cut=2.5
         )
-        up_force = hoomd.md.force.Constant(filter=self.shift_up)
-        down_force = hoomd.md.force.Constant(filter=self.shift_down)
+        up_force = hoomd.md.force.Constant(filter=self.force_up)
+        down_force = hoomd.md.force.Constant(filter=self.force_down)
         up_force.constant_force[self.state.particle_types] = (
                 self.shear_axis * self.shear_force
         )
