@@ -72,12 +72,12 @@ class ShearForce(Simulation):
         self.add_force(up_force)
         self.add_force(down_force)
 
-    def run_shear(self, kT, n_steps):
-        self.set_integrator_method(
-            integrator_method=hoomd.md.methods.NVE,
-            method_kwargs={"filter": self.integrate_group}
+    def run_shear(self, kT, tau_kT, n_steps):
+        self.run_NVT(
+                n_steps = n_steps+1,
+                kT=kT,
+                tau_kT=tau_kT
         )
-        self.run(n_steps + 1)
 
 
 class Shear(Simulation):
