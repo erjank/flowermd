@@ -24,7 +24,7 @@ class ShearForce(Simulation):
             log_write_freq=1e3,
             log_file_name="sim_data.txt"
     ):
-        super(Shear, self).__init__(
+        super(ShearForce, self).__init__(
                 initial_state=initial_state,
                 forcefield=forcefield,
                 r_cut=r_cut,
