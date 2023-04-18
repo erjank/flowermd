@@ -64,10 +64,10 @@ class ShearForce(Simulation):
         up_force = hoomd.md.force.Constant(filter=self.shift_up)
         down_force = hoomd.md.force.Constant(filter=self.shift_down)
         up_force.constant_force[self.state.particle_types] = (
-                self.shear_axis * self.shear_force 
+                self.shear_axis * self.shear_force
         )
         down_force.constant_force[self.state.particle_types] = (
-                self.shear_axis * -self.shear_force 
+                self.shear_axis * -self.shear_force
         )
         self.add_force(up_force)
         self.add_force(down_force)
@@ -76,7 +76,7 @@ class ShearForce(Simulation):
         self.run_NVT(
                 n_steps = n_steps+1,
                 kT=kT,
-                tau_kt=tau_kT
+                tau_kt=tau_kt
         )
 
 
