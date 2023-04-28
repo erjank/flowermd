@@ -1,8 +1,6 @@
 import mbuild as mb
-from mbuild.formats.hoomd_forcefield import create_hoomd_forcefield
 import numpy as np
 import unyt
-from gmso.external import from_mbuild, to_gsd_snapshot
 
 
 from hoomd_polymers import System

@@ -7,7 +7,7 @@ from mbuild.lib.recipes import Polymer as mbPolymer
 import numpy as np
 
 from hoomd_polymers.library import MON_DIR
-from hoomd_polymers import Polymer
+from hoomd_polymers import Molecule, Polymer
 from hoomd_polymers.utils import check_return_iterable
 
 
@@ -141,7 +141,7 @@ class PEKK_meta(Polymer):
         )
     
 
-class LJChain:
+class LJChain(Molecule):
     """Creates a coarse-grained bead-spring polymer chain.
 
     Parameters
@@ -163,13 +163,13 @@ class LJChain:
             bead_mass={"A": 1.0},
             bond_lengths={"A-A": 1.0},
     ):
-        super(LJChain, self).__init__()
         self.description = "Simple bead-spring polymer"
         self.lengths = check_return_iterable(lengths)
         self.n_mols = check_return_iterable(n_mols)
         self.bead_sequence = bead_sequence
         self.bead_mass = bead_mass
         self.bond_lengths = bond_lengths
+        super(LJChain, self).__init__(n_mols=n_mols)
 
     def _build(self, length):
         chain = mb.Compound()
@@ -203,9 +203,7 @@ class LJChain:
         return chain
 
     def _generate(self):
-        molecules = []
         for idx, length in enumerate(self.lengths):
             for i in range(self.n_mols[idx]):
                 mol = self._build(length=length)
-                molecules.append(mol)
-        return molecules
+                self._molecules.append(mol)
