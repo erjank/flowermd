@@ -16,12 +16,15 @@ class Molecule:
         self.file = file 
         self.description = description 
         self._molecules = []
+        self._cg_molecules = []
         self._mapping = None
         self._generate()
 
     @property
     def molecules(self):
         """List of all instances of the molecule"""
+        if self._cg_molecules:
+            return self._cg_molecules
         return self._molecules
     
     @property
@@ -32,6 +35,12 @@ class Molecule:
     @mapping.setter
     def mapping(self, mapping_array):
         self._mapping = mapping_array
+
+    def coarse_grain(self, beads=None, mapping=None):
+        from grits import CG_Compound
+        for comp in self.molecules:
+            cg_comp = CG_Compound(comp, beads=beads, mapping=mapping) 
+            self._cg_molecules.append(cg_comp)
 
     def _load(self):
         if self.file and isinstance(self.file, str): # Loading from file takes precedent over SMILES 
