@@ -110,7 +110,7 @@ class System:
             make_charge_neutral=False,
             r_cut=2.5
     ):
-        if len(self._molecules) == 1:
+        if len(self.molecules) == 1:
             use_residue_map = True
         else:
             use_residue_map = False
