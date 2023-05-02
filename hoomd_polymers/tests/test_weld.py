@@ -25,7 +25,7 @@ class TestWelding(BaseTest):
                 final_box_lengths=sim.box_lengths/2,
         )
         sim.save_restart_gsd()
-        interface = Interface(gsd_file="restart.gsd", interface_axis="x", gap=0.1)
+        interface = Interface(gsd_file="restart.gsd", interface_axis=(1,0,0), gap=0.1)
         interface_snap = interface.hoomd_snapshot
         with gsd.hoomd.open("restart.gsd", "rb") as traj:
             slab_snap = traj[0]
@@ -47,29 +47,36 @@ class TestWelding(BaseTest):
         sim = SlabSimulation(
                 initial_state=polyethylene_system.hoomd_snapshot,
                 forcefield=polyethylene_system.hoomd_forcefield,
+                interface_axis=(1,0,0)
         )
-        assert sim._axis_array == (1,0,0)
-        assert sim._axis_index == 0
+        assert isinstance(sim._forcefield[-1], hoomd.md.external.wall.LJ)
+        wall_axis = np.array(sim._forcefield[-1].walls[0].origin)
+        wall_axis /= np.max(wall_axis)
+        assert np.array_equal(wall_axis, sim.interface_axis)
         sim.run_NVT(kT=1.0, tau_kt=0.01, n_steps=500)
 
     def test_slab_sim_yaxis(self, polyethylene_system):
         sim = SlabSimulation(
                 initial_state=polyethylene_system.hoomd_snapshot,
                 forcefield=polyethylene_system.hoomd_forcefield,
-                interface_axis="y"
+                interface_axis=(0,1,0)
         )
-        assert sim._axis_array == (0,1,0)
-        assert sim._axis_index == 1 
+        assert isinstance(sim._forcefield[-1], hoomd.md.external.wall.LJ)
+        wall_axis = np.array(sim._forcefield[-1].walls[0].origin)
+        wall_axis /= np.max(wall_axis)
+        assert np.array_equal(wall_axis, sim.interface_axis)
         sim.run_NVT(kT=1.0, tau_kt=0.01, n_steps=500)
 
     def test_slab_sim_zaxis(self, polyethylene_system):
         sim = SlabSimulation(
                 initial_state=polyethylene_system.hoomd_snapshot,
                 forcefield=polyethylene_system.hoomd_forcefield,
-                interface_axis="z"
+                interface_axis=(0,0,1)
         )
-        assert sim._axis_array == (0,0,1)
-        assert sim._axis_index == 2 
+        assert isinstance(sim._forcefield[-1], hoomd.md.external.wall.LJ)
+        wall_axis = np.array(sim._forcefield[-1].walls[0].origin)
+        wall_axis /= np.max(wall_axis)
+        assert np.array_equal(wall_axis, sim.interface_axis)
         sim.run_NVT(kT=1.0, tau_kt=0.01, n_steps=500)
 
     def test_weld_sim(self):
