@@ -35,6 +35,7 @@ class ShearForce(Simulation):
                 gsd_file_name=gsd_file_name,
                 log_write_freq=log_write_freq,
         )
+        self.shear_force = shear_force
         self.shear_axis = np.asarray(shear_axis)
         self.interface_axis = np.asarray(interface_axis)
         self.fix_ratio = fix_ratio
