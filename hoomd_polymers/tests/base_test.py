@@ -2,8 +2,7 @@ import os
 
 import pytest
 
-from hoomd_polymers.systems import *
-from hoomd_polymers.molecules import *
+from hoomd_polymers.library import *
 from hoomd_polymers.forcefields import *
 
 

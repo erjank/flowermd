@@ -2,6 +2,7 @@ import mbuild as mb
 from mbuild.formats.hoomd_forcefield import create_hoomd_forcefield
 import numpy as np
 import unyt
+from gmso.external import from_mbuild, to_gsd_snapshot
 
 
 from hoomd_polymers.utils import scale_charges, check_return_iterable
@@ -21,10 +22,8 @@ class System:
         systems at low denisty and running a shrink simulaton
         to acheive a target density.
     """
-    def __init__(self, molecule, n_mols, mol_kwargs={}, density=None):
-        self.n_mols = check_return_iterable(n_mols)
-        self._molecules = check_return_iterable(molecule)
-        self.mol_kwargs = check_return_iterable(mol_kwargs)
+    def __init__(self, molecules, density):
+        self.molecules = []
         self.density = density
         self.target_box = None
         self.system = None
@@ -33,13 +32,16 @@ class System:
         self._reference_values = None
         self.molecules = []
 
-        for mol, n, kw_args, in zip(
-                self._molecules,
-                self.n_mols,
-                self.mol_kwargs
-        ):
-            for i in range(n):
-                self.molecules.append(mol(**kw_args))
+        for mol_list in molecules:
+            self.molecules.extend(mol_list)
+
+    @property
+    def n_molecules(self):
+        return len(self.molecules)
+
+    @property
+    def n_particles(self):
+        return sum([mol.n_particles for mol in self.molecules])
 
     @property
     def mass(self):
@@ -85,6 +87,19 @@ class System:
     @property
     def reference_energy(self):
         return self._reference_values.energy * unyt.kcal / unyt.mol
+    
+    def to_hoomd_snapshot(self, auto_scale=False, base_units=None):
+        topology = from_mbuild(self.system)
+        topology.identify_connections()
+        snap, refs = to_gsd_snapshot(
+                top=topology,
+                auto_scale=auto_scale,
+                base_units=base_units
+        )
+        return snap
+
+    def to_gsd(self):
+        pass
 
     def apply_forcefield(
             self,
@@ -95,7 +110,7 @@ class System:
             make_charge_neutral=False,
             r_cut=2.5
     ):
-        if len(self._molecules) == 1:
+        if len(self.molecules) == 1:
             use_residue_map = True
         else:
             use_residue_map = False
@@ -208,105 +223,3 @@ class System:
         # Convert from cm back to nm
         L *= 1e7
         return L
-
-
-class Pack(System):
-    """Uses PACKMOL via mbuild.packing.fill_box.
-    The box used for packing is expanded to allow PACKMOL to place all of the molecules.
-
-    Parameters
-    ----------
-    packing_expand_factor : int; optional, default 5
-
-    """
-    def __init__(
-            self,
-            molecule,
-            n_mols,
-            mol_kwargs={},
-            density=None,
-            packing_expand_factor=5,
-            edge=0.2
-    ):
-        super(Pack, self).__init__(
-                molecule=molecule,
-                n_mols=n_mols,
-                mol_kwargs=mol_kwargs,
-                density=density
-        )
-        self.packing_expand_factor = packing_expand_factor
-        self.edge = edge
-        self._build()
-
-    def _build(self):
-        self.set_target_box()
-        self.system = mb.packing.fill_box(
-                compound=self.molecules,
-                n_compounds=[1 for i in self.molecules],
-                box=list(self.target_box*self.packing_expand_factor),
-                overlap=0.2,
-                edge=self.edge
-        )
-
-
-class Lattice(System):
-    """Places the molecules in a lattice configuration.
-    Assumes two molecules per unit cell.
-
-    Parameters
-    ----------
-    x : float; required
-        The distance (nm) between lattice points in the x direction. 
-    y : float; required
-        The distance (nm) between lattice points in the y direction. 
-    n : int; required
-        The number of times to repeat the unit cell in x and y
-    lattice_vector : array-like
-        The vector between points in the unit cell 
-    """
-    def __init__(
-            self,
-            molecule,
-            density,
-            n_mols,
-            x,
-            y,
-            n,
-            mol_kwargs={},
-            basis_vector=[0.5, 0.5, 0],
-            z_adjust=1.0,
-    ):
-        super(Lattice, self).__init__(
-                molecule=molecule,
-                n_mols=n_mols,
-                mol_kwargs=mol_kwargs,
-                density=density
-        )
-        self.x = x
-        self.y = y
-        self.n = n
-        self.basis_vector = basis_vector
-        self._build()
-
-    def _build(self):
-        next_idx = 0
-        self.system = mb.Compound()
-        for i in range(self.n):
-            layer = mb.Compound()
-            for j in range(self.n):
-                try:
-                    comp1 = self.molecules[next_idx]
-                    comp2 = self.molecules[next_idx + 1]
-                    comp2.translate(self.basis_vector)
-                    unit_cell = mb.Compound(subcompounds=[comp1, comp2])
-                    unit_cell.translate((0, self.y*j, 0))
-                    layer.add(unit_cell)
-                    next_idx += 2
-                except IndexError:
-                    pass
-            layer.translate((self.x*i, 0, 0))
-            self.system.add(layer)
-        bounding_box = self.system.get_boundingbox()
-        x_len = bounding_box.lengths[0]
-        y_len = bounding_box.lengths[1]
-        self.set_target_box(x_constraint=x_len, y_constraint=y_len)
