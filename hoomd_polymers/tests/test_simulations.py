@@ -47,10 +47,10 @@ class TestSimulate(BaseTest):
         sim.run_NVT(kT=1.0, tau_kt=0.01, n_steps=500)
         assert isinstance(sim.method, hoomd.md.methods.NVT)
 
-    def test_NPT(self, polyethylene_system):
+    def test_NPT(self, pps_system_aa_charges):
         sim = Simulation(
-                initial_state=polyethylene_system.hoomd_snapshot,
-                forcefield=polyethylene_system.hoomd_forcefield
+                initial_state=pps_system_aa_charges.hoomd_snapshot,
+                forcefield=pps_system_aa_charges.hoomd_forcefield
         )
         sim.run_NPT(
                 kT=1.0,
@@ -69,10 +69,10 @@ class TestSimulate(BaseTest):
         sim.run_langevin(n_steps=500, kT=1.0, alpha=0.5)
         assert isinstance(sim.method, hoomd.md.methods.Langevin)
 
-    def test_NVE(self, polyethylene_system):
+    def test_NVE(self, pps_system_ua_charges):
         sim = Simulation(
-                initial_state=polyethylene_system.hoomd_snapshot,
-                forcefield=polyethylene_system.hoomd_forcefield
+                initial_state=pps_system_ua_charges.hoomd_snapshot,
+                forcefield=pps_system_ua_charges.hoomd_forcefield,
         ) 
         sim.run_NVE(n_steps=500)
         assert isinstance(sim.method, hoomd.md.methods.NVE)
