@@ -1,5 +1,6 @@
 from base_test import BaseTest
 import os
+import pickle
 import pytest
 
 import gsd.hoomd
@@ -79,5 +80,24 @@ class TestWelding(BaseTest):
         assert np.array_equal(wall_axis, sim.interface_axis)
         sim.run_NVT(kT=1.0, tau_kt=0.01, n_steps=500)
 
-    def test_weld_sim(self):
-        pass
+    def test_weld_sim(self, polyethylene_system):
+        sim = SlabSimulation(
+                initial_state=polyethylene_system.hoomd_snapshot,
+                forcefield=polyethylene_system.hoomd_forcefield,
+                gsd_write_freq=100,
+                gsd_file_name="slab.gsd",
+        )
+        sim.pickle_forcefield()
+        sim.run_NVT(kT=1.0, tau_kt=0.01, n_steps=500,)
+        interface = Interface(gsd_file="slab.gsd", interface_axis=(1,0,0), gap=0.1)
+        with open("forcefield.pickle", "rb") as file:
+            hoomd_ff = pickle.load(file)
+
+        weld_sim = WeldSimulation(initial_state=interface, forcefield=hoomd_ff)
+        weld_sim.run_NVT(kT=2.0, tau_kt=0.01, n_steps=500)
+
+        if os.path.isfile("slab.gsd"):
+            os.remove("slab.gsd")
+
+        if os.path.isfile("forcefield.pickle"):
+            os.remove("forcefield.pickle")

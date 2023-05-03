@@ -22,17 +22,16 @@ class Interface:
     '''
     def __init__(self, gsd_file, interface_axis, gap, wall_sigma=1.0):
         self.gsd_file = gsd_file
-        self.axis = interface_axis.lower()
+        self.interface_axis = interface_axis
+        self.axis_index = np.where(self.interface_axis != 0)[0]
         self.gap = gap
         self.wall_sigma = wall_sigma
         self.hoomd_snapshot = self._build()
 
     def _build(self):
-        axis_dict = {"x": 0, "y": 1, "z": 2}
         gsd_file = gsd.hoomd.open(self.gsd_file)
         snap = gsd_file[-1]
         gsd_file.close()
-        axis_index = axis_dict[self.axis]
 
         interface = gsd.hoomd.Snapshot()
         interface.particles.N = snap.particles.N * 2
@@ -46,16 +45,16 @@ class Interface:
 
         # Set up box. Box edge is doubled along the interface axis direction, plus the gap
         interface.configuration.box = np.copy(snap.configuration.box)
-        interface.configuration.box[axis_index] *= 2
-        interface.configuration.box[axis_index] += (self.gap - self.wall_sigma)
+        interface.configuration.box[self.axis_index] *= 2
+        interface.configuration.box[self.axis_index] += (self.gap - self.wall_sigma)
         
         # Set up snapshot.particles info:
         # Get set of new coordiantes, shifted along interface axis
-        shift = (snap.configuration.box[axis_index]+self.gap-self.wall_sigma)/2
+        shift = (snap.configuration.box[self.axis_index]+self.gap-self.wall_sigma)/2
         right_pos = np.copy(snap.particles.position)
-        right_pos[:,axis_index] += shift
+        right_pos[:,self.axis_index] += shift
         left_pos = np.copy(snap.particles.position)
-        left_pos[:,axis_index] -= shift
+        left_pos[:,self.axis_index] -= shift
         
         pos = np.concatenate((left_pos, right_pos), axis=None)
         mass = np.concatenate((snap.particles.mass, snap.particles.mass), axis=None)
@@ -152,7 +151,6 @@ class SlabSimulation(Simulation):
                 log_file_name=log_file_name
         )
         self.interface_axis = interface_axis
-        self.axis_index = np.where(self.interface_axis != 0)[0]
         self.add_walls(
                 self.interface_axis,
                 wall_sigma,
