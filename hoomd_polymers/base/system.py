@@ -29,7 +29,7 @@ class System:
         self.system = None
         self.typed_system = None
         self._hoomd_objects = None
-        self._reference_values = None
+        self._reference_values = dict()
         self.molecules = []
 
         for mol_list in molecules:
@@ -78,19 +78,54 @@ class System:
 
     @property
     def reference_distance(self):
-        return self._reference_values.distance * unyt.angstrom
+        value = self._reference_values.get("distance", None)
+        if value:
+            return value
+        return None
+
+    @reference_distance.setter
+    def reference_distance(self, value):
+        self._reference_values["distance"] = value
 
     @property
     def reference_mass(self):
-        return self._reference_values.mass * unyt.amu
+        value = self._reference_values.get("mass", None)
+        if value:
+            return value
+        return None
+
+    @reference_mass.setter
+    def reference_mass(self, value):
+        self._reference_values["mass"] = value
 
     @property
     def reference_energy(self):
-        return self._reference_values.energy * unyt.kcal / unyt.mol
-    
-    def to_hoomd_snapshot(self, auto_scale=False, base_units=None):
+        value = self._reference_values.get("energy", None)
+        if value:
+            return value
+        return None
+
+    @reference_energy.setter
+    def reference_energy(self, value):
+        self._reference_values["energy"] = value
+
+    def to_hoomd_snapshot(self, auto_scale=False):
         topology = from_mbuild(self.system)
         topology.identify_connections()
+        if all([
+            self.reference_distance, self.reference_mass, self.reference_energy]
+        ):
+            base_units = dict(
+                    mass=self.reference_mass,
+                    length=self.reference_distance,
+                    energy=self.reference_energy
+            )
+
+        if base_units and auto_scale:
+            raise ValueError(
+                    "base_units should only be used when not choosing "
+                    "to auto scale mass, distance, and energy."
+            )
         snap, refs = to_gsd_snapshot(
                 top=topology,
                 auto_scale=auto_scale,
