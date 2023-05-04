@@ -27,12 +27,12 @@ class Simulation(hoomd.simulation.Simulation):
     forcefield : list
         List of hoomd force objects to add to the integrator.
     r_cut : float, default 2.5
-        Cutoff radius for potentials (in simulation distance units)
+        Cutoff radius for potentials (in simulation length units)
     dt : float, default 0.0001
         Initial value for dt, the ize of simulation timestep
     auto_scale : bool, default True
         Set to true to use reduced simulation units.
-        distance, mass, and energy are scaled by the largest value
+        length, mass, and energy are scaled by the largest value
         present in the system for each.
     gsd_write : int, default 1e4
         Period to write simulation snapshots to gsd file.
@@ -83,7 +83,7 @@ class Simulation(hoomd.simulation.Simulation):
         ]
         self.integrator = None
         self._dt = dt
-        self._reference_distance = 1
+        self._reference_length = 1
         self._reference_energy = 1
         self._reference_mass = 1
         self._integrate_group = hoomd.filter.All()
@@ -100,12 +100,12 @@ class Simulation(hoomd.simulation.Simulation):
             return self._forcefield
 
     @property
-    def reference_distance(self):
-        return self._reference_distance
+    def reference_length(self):
+        return self._reference_length
 
-    @reference_distance.setter
-    def reference_distance(self, distance):
-        self._reference_distance = distance
+    @reference_length.setter
+    def reference_length(self, length):
+        self._reference_length = length 
 
     @property
     def reference_energy(self):
@@ -130,7 +130,7 @@ class Simulation(hoomd.simulation.Simulation):
 
     @property
     def box_lengths(self):
-        return self.box_lengths_reduced * self.reference_distance
+        return self.box_lengths_reduced * self.reference_length
 
     @property
     def volume_reduced(self):
@@ -180,7 +180,7 @@ class Simulation(hoomd.simulation.Simulation):
     @property
     def real_timestep(self):
         mass = self.reference_mass.to("kg")
-        dist = self.reference_distance.to("m")
+        dist = self.reference_length.to("m")
         energy = self.reference_energy.to("J")
         tau = (mass*(dist**2))/energy
         timestep = self.dt * (tau**0.5)
