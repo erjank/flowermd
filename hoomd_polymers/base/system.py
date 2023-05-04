@@ -1,3 +1,4 @@
+import gsd.hoomd
 import mbuild as mb
 from mbuild.formats.hoomd_forcefield import create_hoomd_forcefield
 import numpy as np
@@ -23,7 +24,6 @@ class System:
         to acheive a target density.
     """
     def __init__(self, molecules, density):
-        self.molecules = []
         self.density = density
         self.target_box = None
         self.system = None
@@ -45,10 +45,7 @@ class System:
 
     @property
     def mass(self):
-        if not self.system:
-            return sum(i.mass for i in self.molecules)
-        else:
-            return self.system.mass
+        return self.system.mass
 
     @property
     def box(self):
@@ -77,22 +74,18 @@ class System:
             return self._hoomd_objects[1]
 
     @property
-    def reference_distance(self):
-        value = self._reference_values.get("distance", None)
-        if value:
-            return value
-        return None
+    def reference_length(self):
+        value = self._reference_values.get("length", None)
+        return value 
 
-    @reference_distance.setter
-    def reference_distance(self, value):
-        self._reference_values["distance"] = value
+    @reference_length.setter
+    def reference_length(self, value):
+        self._reference_values["length"] = value
 
     @property
     def reference_mass(self):
         value = self._reference_values.get("mass", None)
-        if value:
-            return value
-        return None
+        return value 
 
     @reference_mass.setter
     def reference_mass(self, value):
@@ -101,9 +94,7 @@ class System:
     @property
     def reference_energy(self):
         value = self._reference_values.get("energy", None)
-        if value:
-            return value
-        return None
+        return value
 
     @reference_energy.setter
     def reference_energy(self, value):
@@ -112,20 +103,21 @@ class System:
     def to_hoomd_snapshot(self, auto_scale=False):
         topology = from_mbuild(self.system)
         topology.identify_connections()
-        if all([
-            self.reference_distance, self.reference_mass, self.reference_energy]
+        if all(
+                [self.reference_distance,
+                 self.reference_mass,
+                 self.reference_energy]
         ):
             base_units = dict(
                     mass=self.reference_mass,
-                    length=self.reference_distance,
+                    length=self.reference_length,
                     energy=self.reference_energy
             )
 
-        if base_units and auto_scale:
-            raise ValueError(
-                    "base_units should only be used when not choosing "
-                    "to auto scale mass, distance, and energy."
-            )
+            if auto_scale:
+                raise ValueError(
+                        "Error about setting ref value attributes and using auto scale"
+                )
         snap, refs = to_gsd_snapshot(
                 top=topology,
                 auto_scale=auto_scale,
@@ -133,8 +125,10 @@ class System:
         )
         return snap
 
-    def to_gsd(self):
-        pass
+    def to_gsd(self, filename, auto_scale=False):
+        snap = self.to_hoomd_snapshot(auto_scale=auto_scale)
+        with gsd.hoomd.open(filename, "wb") as traj:
+            traj.append(snap)
 
     def apply_forcefield(
             self,
