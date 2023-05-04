@@ -107,7 +107,7 @@ class System:
         topology = from_mbuild(self.system)
         topology.identify_connections()
         if all(
-                [self.reference_distance,
+                [self.reference_length,
                  self.reference_mass,
                  self.reference_energy]
         ):
