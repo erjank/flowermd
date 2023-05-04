@@ -45,7 +45,10 @@ class System:
 
     @property
     def mass(self):
-        return self.system.mass
+        if not self.system:
+            return sum([mol.mass for mol in self.molecules])
+        else:
+            return self.system.mass
 
     @property
     def box(self):
