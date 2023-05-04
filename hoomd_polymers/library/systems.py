@@ -22,7 +22,7 @@ class Pack(System):
             density,
             packing_expand_factor=5,
             edge=0.2,
-            overalap=0.2
+            overlap=0.2
     ):
         super(Pack, self).__init__(molecules=molecules, density=density)
         self.packing_expand_factor = packing_expand_factor
