@@ -44,18 +44,28 @@ class FF_from_file(foyer.Forcefield):
 
 
 class BeadSpring:
-    def __init__(self, r_cut, beads, bonds=None, angles=None, dihedrals=None):
+    def __init__(
+            self,
+            r_cut,
+            beads,
+            bonds=None,
+            angles=None,
+            dihedrals=None,
+            exclusions=["bond", "1-3"]
+    ):
         self.beads = beads
         self.bonds = bonds
         self.angles = angles
         self.dihedrals = dihedrals
         self.r_cut = r_cut
+        self.exclusions = exclusions
         self.hoomd_forcefield = self._create_forcefield() 
         
     def _create_forcefield(self):
         forces = []
         # Create pair force:
-        lj = hoomd.md.pair.LJ(nlist=hoomd.md.nlist.Cell(buffer=0.40))
+        nlist = hoomd.md.nlist.Cell(buffer=0.40, exclusions=self.exclusions)
+        lj = hoomd.md.pair.LJ(nlist=nlist)
         bead_types = [key for key in self.beads.keys()]
         all_pairs = list(
                 itertools.combinations_with_replacement(bead_types, 2)
