@@ -12,9 +12,9 @@ from hoomd_polymers.utils import check_return_iterable
 class Molecule:
     def __init__(self, n_mols, smiles=None, file=None, description=None):
         self.n_mols = check_return_iterable(n_mols)
-        self.smiles = smiles 
-        self.file = file 
-        self.description = description 
+        self.smiles = smiles
+        self.file = file
+        self.description = description
         self._molecules = []
         self._cg_molecules = []
         self._mapping = None
@@ -26,7 +26,7 @@ class Molecule:
         if self._cg_molecules:
             return self._cg_molecules
         return self._molecules
-    
+
     @property
     def mapping(self):
         """Dictionary of particle index to bead mapping"""
@@ -39,11 +39,11 @@ class Molecule:
     def coarse_grain(self, beads=None, mapping=None):
         from grits import CG_Compound
         for comp in self.molecules:
-            cg_comp = CG_Compound(comp, beads=beads, mapping=mapping) 
+            cg_comp = CG_Compound(comp, beads=beads, mapping=mapping)
             self._cg_molecules.append(cg_comp)
 
     def _load(self):
-        if self.file and isinstance(self.file, str): # Loading from file takes precedent over SMILES 
+        if self.file and isinstance(self.file, str): # Loading from file takes precedent over SMILES
             return mb.load(self.file)
         elif self.smiles and isinstance(self.smiles, str):
             return mb.load(self.smiles, smiles=True)
@@ -53,7 +53,7 @@ class Molecule:
                     f"File: {self.file}",
                     f"SMILES: {self.smiles}"
             )
-    
+
     def _generate(self):
         pass
 
@@ -105,7 +105,7 @@ class Polymer(Molecule):
 
 class CoPolymer(Molecule):
     """Builds a polymer consisting of two monomer types.
-    
+
     Parameters
     ----------
     monomer_A : hoomd_polymers.molecules.Polymer; required
@@ -161,7 +161,7 @@ class CoPolymer(Molecule):
                 file=self.file,
                 description=self.description
         )
-    
+
     @property
     def A_ratio(self):
         return self._A_count / (self._A_count + self._B_count)

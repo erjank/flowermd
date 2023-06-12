@@ -22,7 +22,7 @@ class Interface:
     '''
     def __init__(self, gsd_file, interface_axis, gap, wall_sigma=1.0):
         self.gsd_file = gsd_file
-        self.interface_axis = interface_axis
+        self.interface_axis = np.asarray(interface_axis)
         self.axis_index = np.where(self.interface_axis != 0)[0]
         self.gap = gap
         self.wall_sigma = wall_sigma
@@ -47,7 +47,7 @@ class Interface:
         interface.configuration.box = np.copy(snap.configuration.box)
         interface.configuration.box[self.axis_index] *= 2
         interface.configuration.box[self.axis_index] += (self.gap - self.wall_sigma)
-        
+
         # Set up snapshot.particles info:
         # Get set of new coordiantes, shifted along interface axis
         shift = (snap.configuration.box[self.axis_index]+self.gap-self.wall_sigma)/2
@@ -55,7 +55,7 @@ class Interface:
         right_pos[:,self.axis_index] += shift
         left_pos = np.copy(snap.particles.position)
         left_pos[:,self.axis_index] -= shift
-        
+
         pos = np.concatenate((left_pos, right_pos), axis=None)
         mass = np.concatenate((snap.particles.mass, snap.particles.mass), axis=None)
         charges = np.concatenate((snap.particles.charge, snap.particles.charge), axis=None)
@@ -67,7 +67,7 @@ class Interface:
         interface.particles.charge = charges
         interface.particles.types = snap.particles.types
         interface.particles.typeid = type_ids
-        
+
         # Set up bonds:
         bond_group_left = np.copy(snap.bonds.group)
         bond_group_right = np.copy(snap.bonds.group) + snap.particles.N
@@ -78,7 +78,7 @@ class Interface:
         interface.bonds.group = bond_group
         interface.bonds.typeid = bond_type_ids
         interface.bonds.types = snap.bonds.types
-        
+
         # Set up angles:
         angle_group_left = np.copy(snap.angles.group)
         angle_group_right = np.copy(snap.angles.group) + snap.particles.N
@@ -91,7 +91,7 @@ class Interface:
         interface.angles.group = angle_group
         interface.angles.typeid = angle_type_ids
         interface.angles.types = snap.angles.types
-        
+
         # Set up dihedrals:
         dihedral_group_left = np.copy(snap.dihedrals.group)
         dihedral_group_right = np.copy(snap.dihedrals.group) + snap.particles.N
@@ -117,7 +117,7 @@ class Interface:
             interface.pairs.typeid = pair_type_ids
             interface.pairs.types = snap.pairs.types
         return interface
-    
+
     def save_gsd(self, file_name="interface.gsd"):
         with gsd.hoomd.open(file_name, "wb") as traj:
             traj.append(self.hoomd_snapshot)
@@ -150,7 +150,7 @@ class SlabSimulation(Simulation):
                 log_write_freq=log_write_freq,
                 log_file_name=log_file_name
         )
-        self.interface_axis = interface_axis
+        self.interface_axis = np.asarray(interface_axis)
         self.add_walls(
                 self.interface_axis,
                 wall_sigma,
@@ -192,7 +192,7 @@ class WeldSimulation(Simulation):
                 log_write_freq=log_write_freq,
                 log_file_name=log_file_name
         )
-        self.interface_axis = interface_axis
+        self.interface_axis = np.asarray(interface_axis)
         self.add_walls(
                 self.interface_axis,
                 wall_sigma,

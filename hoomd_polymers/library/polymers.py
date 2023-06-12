@@ -108,7 +108,7 @@ class PEKK_para(Polymer):
                 bond_length=bond_length,
                 bond_orientation=bond_orientation
         )
-    
+
 
 class PEKK_meta(Polymer):
     """Creates a Poly(ether-ketone-ketone) (PEKK) chain.
@@ -139,7 +139,7 @@ class PEKK_meta(Polymer):
                 bond_length=bond_length,
                 bond_orientation=bond_orientation
         )
-    
+
 
 class LJChain(Molecule):
     """Creates a coarse-grained bead-spring polymer chain.
@@ -152,7 +152,7 @@ class LJChain(Molecule):
         The sequence of bead types in the chain.
     bond_length : dict; optional; default {"A-A": 1.0}
         The bond length between connected beads (units: nm)
-    bead_mass : dict; optional; default {"A": 1.0} 
+    bead_mass : dict; optional; default {"A": 1.0}
         The mass of the bead types
     """
     def __init__(
