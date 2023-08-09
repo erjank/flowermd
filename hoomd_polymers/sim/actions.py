@@ -1,4 +1,4 @@
-import hoomd
+sim.import hoomd
 import numpy as np
 
 
@@ -74,33 +74,34 @@ class BreakBonds(hoomd.custom.Action):
             batch_size
     ):
         self.break_bond_type = break_bond_type
-        self.form_type = bond_form_type
+        self.break_bond_type = break_bond_type 
         self.condition = condition_func
         self.sim = sim
         self.broken_bond_particles = []
-        with self._state.cpu_local_snapshot as snap:
+        with self.sim._state.cpu_local_snapshot as snap:
             self.break_bond_indices = np.where(
                     snap.bonds.typeid == snap.bonds.types[self.break_bond_type]
             )[0]
 
-        def break_bonds(self, bond_indices):
-            with self._state.cpu_local_snapshot as snap:
-                snap.bonds.N -= len(bond_indices) 
-                snap.bonds.group = np.delete(
-                        snap.bonds.group, bond_indices, axis=0
-                )
-                snap.bonds.typeid = np.delete(
-                        snap.bonds.typeid, bond_indices, axis=0
-                )
+    def break_bonds(self, bond_indices):
+        with self.sim._state.cpu_local_snapshot as snap:
+            snap.bonds.N -= len(bond_indices) 
+            snap.bonds.group = np.delete(
+                    snap.bonds.group, bond_indices, axis=0
+            )
+            snap.bonds.typeid = np.delete(
+                    snap.bonds.typeid, bond_indices, axis=0
+            )
 
-        def get_break_bond_indices(self):
-            with self._state.cpu_local_snapshot as snap:
-                break_bond_indices = np.where(
-                        snap.bonds.typeid == snap.bonds.types[self.break_bond_type]
-                )[0]
-                return break_bond_indices
+    def get_break_bond_indices(self):
+        with self.sim._state.cpu_local_snapshot as snap:
+            neg_filter = snap.particles.rtag[self.neg_filter.tags]
+            break_bond_indices = np.where(
+                    snap.bonds.typeid == snap.bonds.types[self.break_bond_type]
+            )[0]
+            return break_bond_indices
 
-        def act(self, timestep):
-            break_bond_indices = self.get_break_bond_indices()
-            np.random.shuffle(break_bond_indices)
-            self.break_bonds(bond_indices=break_bond_indices[batch_size-1:])
+    def act(self, timestep):
+        break_bond_indices = self.get_break_bond_indices()
+        np.random.shuffle(break_bond_indices)
+        self.break_bonds(bond_indices=break_bond_indices[batch_size-1:])

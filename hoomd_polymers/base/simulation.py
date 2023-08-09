@@ -251,11 +251,11 @@ class Simulation(hoomd.simulation.Simulation):
                     "have been called for the first time."
             )
 
-    def add_action(self, hoomd_action, action_kwargs, period, start_timestep):
+    def add_action(self, action, action_kwargs, period, start_timestep):
         # TODO: Can we add start time step here?
         trigger = hoomd.trigger.Periodic(period)
-        action = hoomd_action(**action_kwargs)
-        updater = hoomd.update.CustomUpdater(trigger=trigger, action=action)
+        hoomd_action = action(sim=self, **action_kwargs)
+        updater = hoomd.update.CustomUpdater(trigger=trigger, action=hoomd_action)
         self.operations.updaters.append(updater)
 
     def add_force(self, hoomd_force):
