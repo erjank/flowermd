@@ -74,14 +74,10 @@ class BreakBonds(hoomd.custom.Action):
             batch_size
     ):
         self.break_bond_type = break_bond_type
-        self.break_bond_type = break_bond_type 
+        self.form_type = bond_form_type
         self.condition = condition_func
-        self.sim = sim
+        self.type_indices = np.where(self._state.bond_types == self.type)[0]
         self.broken_bond_particles = []
-        with self.sim._state.cpu_local_snapshot as snap:
-            self.break_bond_indices = np.where(
-                    snap.bonds.typeid == snap.bonds.types[self.break_bond_type]
-            )[0]
 
     def break_bonds(self, bond_indices):
         with self.sim._state.cpu_local_snapshot as snap:
