@@ -7,8 +7,7 @@ comment:
     branches:               # branch names that can post comment
         - "main"
 ignore:
-    - "hoomd-polymers/tests"
-    - "hoomd-polymers/library/*"
-    - "hoomd-polymers/logs"
-    - "hoomd-polymers/__version__.py"
-    - "setup.py"
+    - "flowermd/tests"
+    - "flowermd/assets"
+    - "flowermd/__version__.py"
+    - "tutorials"

@@ -2,9 +2,19 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.swp
 
 # C extensions
 *.so
+
+# Images
+*.png
+*.jpg
+
+# Tutorial/test files
+*.gsd
+*.txt
+*.pickle
 
 # Distribution / packaging
 .Python
@@ -127,3 +137,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDE files
+.idea/
+
+# emacs backup saves
+*.~
+*.#
